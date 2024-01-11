@@ -1,0 +1,27 @@
+[package]
+
+name = "sys-info-extended"
+version = "0.1.0"
+authors = ["Necdet Arda Etiman"]
+license = "MIT"
+readme = "README.md"
+keywords = ["graphic", "cpu", "disk", "memory", "information"]
+repository = "https://github.com/Necoo33/sys-info-extended"
+description = """
+
+This crate is a fork of https://crates.io/crates/sys-info crate and extended version of it.
+
+"""
+
+links = "info"
+build = "build.rs"
+
+[lib]
+name = "sys_info"
+path = "lib.rs"
+
+[build-dependencies]
+cc = "1"
+
+[dependencies]
+libc = "0.2.29"
