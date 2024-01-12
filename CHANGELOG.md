@@ -2,6 +2,11 @@
 
 ## sys-info-extended
 
+### 0.1.1
+
+- added `check_computer_type()` function for windows and linux. It checks if your computer is desktop, laptop or another type of computer. It's only Desktop or Notebook answers for linux. Basically if your computer has batteries, that function return "Notebook" value as &str.
+- Some documentation fixes
+
 ### 0.1.0
 
 - added `get_graphics_info()` function for windows, which includes every property of windows's VideoController class.

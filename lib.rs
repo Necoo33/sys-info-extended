@@ -1070,6 +1070,91 @@ pub fn get_graphics_info() -> WindowsGraphicsCard {
     }
 }
 
+#[cfg(any(target_os = "windows", target_os = "linux"))]
+pub fn check_computer_type<'a>() -> &'a str {
+    use std::process::{Command, Output};
+    use std::str;
+    let mut result = "Unknown";
+
+    #[cfg(target_os = "windows")]
+    {
+        fn computer_type_cleanup_for_windows<'a>(our_output: Output) -> &'a str {
+            let get_output = str::from_utf8(&our_output.stdout).unwrap()
+                                            .replace("\r", "")
+                                            .replace("\n", "")
+                                            .replace("chassistypes", "")
+                                            .replace("-", "")
+                                            .replace(" ", "");
+    
+            return match get_output.as_str() {
+                "{1}" => "Other", "{2}" => "Unknown", "{3}" => "Desktop", "{4}" => "Low Profile Desktop", "{5}" => "Pizza Box",
+                "{6}" => "Mini Tower", "{7}" => "Tower", "{8}" => "Portable", "{9}" => "Laptop", "{10}" => "Notebook", "{11}" => "Handheld", 
+                "{12}" => "Docking Station", "{13}" => "All-in-One", "{14}" => "Sub-Notebook", "{15}" => "Space Saving", "{16}" => "Lunch Box", 
+                "{17}" => "Main System Chassis", "{18}" => "Expansion Chassis", "{19}" => "Sub-Chassis", "{20}" => "Bus Expansion Chassis", 
+                "{21}" => "Peripheral Chassis", "{22}" => "Storage Chassis", "{23}" => "Rack Mount Chassis", "{24}" => "Sealed-Case PC",
+                &_ => "Unknown" 
+            }
+        }
+    
+        let chassis_type_number = Command::new("powershell")
+                                            .arg("Get-WmiObject")
+                                            .arg("win32_systemenclosure | select chassistypes")
+                                            .output();
+    
+        match chassis_type_number {
+            Ok(chassis_num) => result = computer_type_cleanup_for_windows(chassis_num),
+            Err(err) => {
+                eprintln!("some error occured: {}", err);
+            }
+        };
+
+        
+    };
+
+    #[cfg(target_os = "linux")]
+    {
+        let check_bat0 = Command::new("sh")
+                            .arg("-c")
+                            .arg("test -d /sys/class/power_supply/BAT0")
+                            .output()
+                            .expect("Couldn't run command")
+                            .status
+                            .success();
+
+        let check_bat1 = Command::new("sh")
+                            .arg("-c")
+                            .arg("test -d /sys/class/power_supply/BAT1")
+                            .output()
+                            .expect("Couldn't run command")
+                            .status
+                            .success();
+
+        let check_bat2 = Command::new("sh")
+                            .arg("-c")
+                            .arg("test -d /sys/class/power_supply/BAT2")
+                            .output()
+                            .expect("Couldn't run command")
+                            .status
+                            .success();
+
+        let check_bat3 = Command::new("sh")
+                            .arg("-c")
+                            .arg("test -d /sys/class/power_supply/BAT3")
+                            .output()
+                            .expect("Couldn't run command")
+                            .status
+                            .success();
+
+        if check_bat0 || check_bat1 || check_bat2 || check_bat3 {
+            result = "Notebook";
+        } else {
+            result = "Desktop";
+        }
+    }
+
+    return result;
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -1142,6 +1227,13 @@ mod test {
         let graphics = get_graphics_info();
         println!("Graphics info: {:?}", graphics);
     }
+
+    #[test]
+    pub fn test_check_computer_type() {
+        let pc_type = check_computer_type();
+        println!("computer type: {}", pc_type);
+    }
+
 
     #[test]
     #[cfg(not(windows))]

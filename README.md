@@ -1,6 +1,6 @@
 # sys-info-extended
 
-This crate is fork of [text](https://crates.io/crates/sys-info) crate, and i'll continue to develop that crate. Contributions are welcome.
+This crate is a fork of [sys-info](https://crates.io/crates/sys-info) crate, and i'll continue to develop. Contributions are welcome especially for mac os.
 
 Get system information in Rust.
 
@@ -12,14 +12,14 @@ Add this to `Cargo.toml`:
 
 ```
 [dependencies]
-sys-info = "0.9"
+sys-info-extended = "0.1.1"
 ```
 
 and add this to crate root:
 
 ```rust
 
-use sys_info::{os_type, os_release, get_graphics_info};
+use sys_info_extended::{os_type, os_release, get_graphics_info};
 
 ```
 
