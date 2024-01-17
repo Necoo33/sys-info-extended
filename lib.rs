@@ -1155,6 +1155,36 @@ pub fn check_computer_type<'a>() -> &'a str {
     return result;
 }
 
+#[cfg(any(target_os = "windows", target_os = "linux"))]
+pub fn get_current_user() -> String {
+    use std::process::Command;
+    use std::str::from_utf8;
+    let result;
+
+    #[cfg(target_os = "windows")]
+    {
+        let current_user_command = Command::new("cmd")
+                                        .arg("/C")
+                                        .arg("echo")
+                                        .arg("%username%")
+                                        .output()
+                                        .expect("cannot figured out user");
+
+        result = from_utf8(&current_user_command.stdout).unwrap().trim().to_string()
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let current_user_command = Command::new("whoami")
+                                                .output()
+                                                .expect("cannot figured out user");
+
+        result = from_utf8(&current_user_command.stdout).unwrap().trim().to_string()
+    }
+
+    return result
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

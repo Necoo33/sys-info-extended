@@ -2,6 +2,10 @@
 
 ## sys-info-extended
 
+### 0.1.2
+
+- added `get_current_user()` function for windows and linux. It checks the current user in the running moment of your code.
+
 ### 0.1.1
 
 - added `check_computer_type()` function for windows and linux. It checks if your computer is desktop, laptop or another type of computer. It's only Desktop or Notebook answers for linux. Basically if your computer has batteries, that function return "Notebook" value as &str.

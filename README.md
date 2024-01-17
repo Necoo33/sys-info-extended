@@ -7,10 +7,13 @@ Get system information in Rust.
 For now it supports Linux, Mac OS X, illumos, Solaris, FreeBSD, OpenBSD, NetBSD and Windows.
 And now it can get information of kernel/cpu/memory/disk/load/hostname/graphics and so on.
 
-### Usage
+If you like this liblary, give a star on it's [github repo](https://github.com/Necoo33/sys-info-extended)
+
+## Usage
+
 Add this to `Cargo.toml`:
 
-```
+```rust
 [dependencies]
 sys-info-extended = "0.1.1"
 ```
@@ -33,7 +36,7 @@ let graphics = get_graphics_info();
 
 ```
 
-### Already Planned Features For Next Releases:
+### Already Planned Features For Next Releases
 
 * Camera Infos
 * USB Infos
