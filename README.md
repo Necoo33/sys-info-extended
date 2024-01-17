@@ -13,9 +13,9 @@ If you like this liblary, give a star on it's [github repo](https://github.com/N
 
 Add this to `Cargo.toml`:
 
-```rust
+```toml
 [dependencies]
-sys-info-extended = "0.1.1"
+sys-info-extended = "0.1.2"
 ```
 
 and add this to crate root:
