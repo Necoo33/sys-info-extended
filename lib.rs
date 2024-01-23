@@ -1185,6 +1185,70 @@ pub fn get_current_user() -> String {
     return result
 }
 
+#[cfg(any(target_os = "windows", target_os = "linux"))]
+pub fn get_public_ipv4_address() -> String {
+    let mut ip_address = String::new();
+
+    #[cfg(target_os = "linux")]
+    {
+        extern crate palin;
+        use palin::{check_if_curl_exist, check_if_dig_exist, check_if_wget_exist};
+
+        if check_if_dig_exist() {
+            let dig_command = std::process::Command::new("dig").arg("+short").arg("myip.opendns.com").arg("@resolver1.opendns.com").output();
+
+            match dig_command {
+                Ok(answer) => {
+                    let parse_answer = std::str::from_utf8(&answer.stdout).unwrap();
+
+                    ip_address = parse_answer;
+                },
+                Err(_) => ()
+            }
+        } else if check_if_wget_exist() {
+            let wget_command = std::process::Command::new("wget").arg("-qO-").arg("ifconfig.me/ip").output();
+
+            match wget_command {
+                Ok(answer) => {
+                    let parse_answer = std::str::from_utf8(&answer.stdout).unwrap();
+
+                    ip_address = parse_answer;
+                },
+                Err(_) => ()
+            }
+        } else if check_if_curl_exist() {
+            let curl_command = std::process::Command::new("curl").arg("ifconfig.me/ip").output();
+
+            match curl_command {
+                Ok(answer) => {
+                    let parse_answer = std::str::from_utf8(&answer.stdout).unwrap();
+
+                    ip_address = parse_answer;
+                },
+                Err(_) => ()
+            }
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let get_ip_address = std::process::Command::new("powershell").arg("-Command").arg("(Invoke-WebRequest -Uri \"http://ifconfig.me/ip\").Content").output();
+
+        match get_ip_address {
+            Ok(answer) => {
+                let parse_answer = std::str::from_utf8(&answer.stdout).unwrap();
+
+                ip_address = parse_answer.trim().to_string()
+            },
+            Err(error) => {
+                eprintln!("this error occrued on get_public_ipv4_address function: {}", error)
+            } 
+        }
+    }
+
+    return ip_address
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

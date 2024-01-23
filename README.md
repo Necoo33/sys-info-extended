@@ -15,7 +15,7 @@ Add this to `Cargo.toml`:
 
 ```toml
 [dependencies]
-sys-info-extended = "0.1.2"
+sys-info-extended = "0.2.0"
 ```
 
 and add this to crate root:

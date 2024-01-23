@@ -2,6 +2,10 @@
 
 ## sys-info-extended
 
+### 0.2.0
+
+- added `get_public_ipv4_address()` function for windows and linux. It requires either dig, wget or curl has to be installed on the running system for linux. It requires internet connection for properly.
+
 ### 0.1.2
 
 - added `get_current_user()` function for windows and linux. It checks the current user in the running moment of your code.
