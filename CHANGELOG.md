@@ -2,6 +2,11 @@
 
 ## sys-info-extended
 
+### 0.2.2
+
+- palin version upgraded to v0.2.0
+- a bug fixed.
+
 ### 0.2.1
 
 - a bug fixed on `get_public_ipv4_address()` when using linux.

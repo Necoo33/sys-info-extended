@@ -6,6 +6,7 @@
 //!
 
 extern crate libc;
+extern crate palin;
 
 use std::ffi;
 use std::fmt;
