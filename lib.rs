@@ -1201,7 +1201,7 @@ pub fn get_public_ipv4_address() -> String {
                 Ok(answer) => {
                     let parse_answer = std::str::from_utf8(&answer.stdout).unwrap();
 
-                    ip_address = parse_answer;
+                    ip_address = parse_answer.trim().to_string();
                 },
                 Err(_) => ()
             }
@@ -1212,7 +1212,7 @@ pub fn get_public_ipv4_address() -> String {
                 Ok(answer) => {
                     let parse_answer = std::str::from_utf8(&answer.stdout).unwrap();
 
-                    ip_address = parse_answer;
+                    ip_address = parse_answer.trim().to_string();
                 },
                 Err(_) => ()
             }
@@ -1223,7 +1223,7 @@ pub fn get_public_ipv4_address() -> String {
                 Ok(answer) => {
                     let parse_answer = std::str::from_utf8(&answer.stdout).unwrap();
 
-                    ip_address = parse_answer;
+                    ip_address = parse_answer.trim().to_string();
                 },
                 Err(_) => ()
             }

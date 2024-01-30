@@ -2,9 +2,13 @@
 
 ## sys-info-extended
 
+### 0.2.1
+
+- a bug fixed on `get_public_ipv4_address()` when using linux.
+
 ### 0.2.0
 
-- added `get_public_ipv4_address()` function for windows and linux. It requires either dig, wget or curl has to be installed on the running system for linux. It requires internet connection for properly.
+- added `get_public_ipv4_address()` function for windows and linux. It requires either dig, wget or curl has to be installed on the running system for linux. It requires internet connection for running properly.
 
 ### 0.1.2
 
