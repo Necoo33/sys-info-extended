@@ -1250,6 +1250,224 @@ pub fn get_public_ipv4_address() -> String {
     return ip_address
 }
 
+pub fn is_program_installed(program: &str) -> bool {
+    let check1 = std::process::Command::new(program).output();
+
+    match check1 {
+        Ok(_) => return true,
+        Err(_) => ()
+    };
+
+    let check2 = std::process::Command::new(program).arg("version").output();
+
+    match check2 {
+        Ok(_) => return true,
+        Err(_) => ()
+    };
+
+    let check3 = std::process::Command::new(program).arg("--version").output();
+
+    match check3 {
+        Ok(_) => return true,
+        Err(_) => ()
+    }
+
+    return false
+}
+
+#[cfg(target_os = "windows")]
+#[derive(Debug)]
+pub struct HardSearchOptions{
+    pub case_sensitive: bool,
+    pub search_hardness: u8
+}
+
+#[cfg(target_os = "windows")]
+pub fn is_program_installed_search_hard(program: &str, options: HardSearchOptions) -> bool {
+    if options.search_hardness == 0 {
+        return false;
+    }
+
+    let check1 = std::process::Command::new(program).output();
+
+    match check1 {
+        Ok(_) => return true,
+        Err(_) => ()
+    };
+
+    if options.search_hardness == 1 {
+        return false;
+    }
+
+    let check2 = std::process::Command::new(program).arg("version").output();
+
+    match check2 {
+        Ok(_) => return true,
+        Err(_) => ()
+    };
+
+    if options.search_hardness == 2 {
+        return false;
+    }
+
+    let check3 = std::process::Command::new(program).arg("--version").output();
+
+    match check3 {
+        Ok(_) => return true,
+        Err(_) => ()
+    }
+
+    if options.search_hardness == 3 {
+        return false;
+    }
+
+    let check4 = std::process::Command::new("powershell").arg("Get-Package").output();
+
+    match check4 {
+        Ok(answer) => {
+            let parse_answer = String::from_utf8_lossy(&answer.stdout);
+
+            for line in parse_answer.lines() {
+                if options.case_sensitive {
+                    if line.trim().starts_with(program) {
+                        return true;
+                    } 
+                } else {
+                    let left_side = line.trim().to_lowercase();
+                    let left_side = String::from_utf8_lossy(left_side.as_bytes());
+                    let left_side = left_side.as_ref();
+                    let right_side = program.to_lowercase();
+                    let right_side = String::from_utf8_lossy(right_side.as_bytes());
+                    let right_side = right_side.as_ref();
+                    
+                    if left_side.contains(right_side) {
+                        return true
+                    }
+                }
+            }
+        },
+        Err(_) => ()
+    }
+
+    if options.search_hardness == 4 {
+        return false;
+    }
+
+    let check5 = std::process::Command::new("powershell").arg("Get-AppxPackage").output();
+
+    match check5 {
+        Ok(answer) => {
+            let parse_answer = String::from_utf8_lossy(&answer.stdout);
+
+            for line in parse_answer.lines() {
+                match options.case_sensitive {
+                    true => {
+                        if line.starts_with("Name") {
+                            let split_the_line: &str = line.split(":").collect::<Vec<&str>>()[1].trim();
+
+                            if program == split_the_line {
+                                return true;
+                            }
+                        }
+
+                        if line.starts_with("PackageFullName") {
+                            let split_the_line: &str = line.split(":").collect::<Vec<&str>>()[1].trim();
+
+                            if program == split_the_line {
+                                return true;
+                            }
+                        }
+
+                        if line.starts_with("PackageFamilyName") {
+                            let split_the_line: &str = line.split(":").collect::<Vec<&str>>()[1].trim();
+
+                            if program == split_the_line {
+                                return true;
+                            }
+                        }
+                    },
+                    false => {
+                        if line.starts_with("Name") {
+                            let split_the_line: &str = line.split(":").collect::<Vec<&str>>()[1].trim();
+
+                            let left_side = split_the_line.trim().to_lowercase();
+                            let left_side = String::from_utf8_lossy(left_side.as_bytes());
+                            let left_side = left_side.as_ref();
+                            let right_side = program.to_lowercase();
+                            let right_side = String::from_utf8_lossy(right_side.as_bytes());
+                            let right_side = right_side.as_ref();
+                            
+                            if left_side == right_side {
+                                return true
+                            }
+                        }
+
+                        if line.starts_with("PackageFullName") {
+                            let split_the_line: &str = line.split(":").collect::<Vec<&str>>()[1].trim();
+
+                            let left_side = split_the_line.trim().to_lowercase();
+                            let left_side = String::from_utf8_lossy(left_side.as_bytes());
+                            let left_side = left_side.as_ref();
+                            let right_side = program.to_lowercase();
+                            let right_side = String::from_utf8_lossy(right_side.as_bytes());
+                            let right_side = right_side.as_ref();
+                            
+                            if left_side == right_side {
+                                return true
+                            }
+                        }
+
+                        if line.starts_with("PackageFamilyName") {
+                            let split_the_line: &str = line.split(":").collect::<Vec<&str>>()[1].trim();
+
+                            let left_side = split_the_line.trim().to_lowercase();
+                            let left_side = String::from_utf8_lossy(left_side.as_bytes());
+                            let left_side = left_side.as_ref();
+                            let right_side = program.to_lowercase();
+                            let right_side = String::from_utf8_lossy(right_side.as_bytes());
+                            let right_side = right_side.as_ref();
+                            
+                            if left_side == right_side {
+                                return true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        Err(_) => ()
+    }
+
+    if options.search_hardness == 5 {
+        return false;
+    }
+
+    let check6 = std::process::Command::new("powershell").arg("wmic").arg("product").arg("get").arg("name").output();
+
+    match check6 {
+        Ok(answer) => {
+            let parse_answer = String::from_utf8_lossy(&answer.stdout);
+
+            for line in parse_answer.lines() {
+                if options.case_sensitive {
+                    if line.trim() == program {
+                        return true;
+                    } 
+                } else {
+                    if line.trim().to_lowercase().as_bytes() == program.to_lowercase().as_bytes() {
+                        return true
+                    }
+                }
+            }
+        },
+        Err(error) => {
+            eprintln!("for that reason we cannot take wmic output: {}", error)
+        }
+    }
+
+    return false
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -1317,18 +1535,19 @@ mod test {
         println!("hostname(): {}", host);
     }
 
+    #[cfg(target_os = "windows")]
     #[test]
     pub fn test_get_graphics_info(){
         let graphics = get_graphics_info();
         println!("Graphics info: {:?}", graphics);
     }
 
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     #[test]
     pub fn test_check_computer_type() {
         let pc_type = check_computer_type();
         println!("computer type: {}", pc_type);
     }
-
 
     #[test]
     #[cfg(not(windows))]
@@ -1343,5 +1562,29 @@ mod test {
     pub fn test_linux_os_release() {
         let os_release = linux_os_release().unwrap();
         println!("linux_os_release(): {:?}", os_release.name)
+    }
+
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
+    #[test]
+    pub fn test_get_public_ipv4_address(){
+        assert_ne!(String::new(), get_public_ipv4_address())
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    pub fn test_is_program_installed_search_hard(){
+        let hard_search_options = HardSearchOptions {
+            case_sensitive: false, // if this is false, you don't need to match lower or upper cases.
+            search_hardness: 5 // the biggest level is 6, and it's it's slowest level. If your program is available on terminal, choose 3 instead.
+        };
+
+        assert_eq!(true, is_program_installed_search_hard("miCroSoft eDgE", hard_search_options));
+
+        let hard_search_options_2 = HardSearchOptions {
+            case_sensitive: true,
+            search_hardness: 5
+        };
+
+        assert_eq!(true, is_program_installed_search_hard("Microsoft Edge", hard_search_options_2))
     }
 }
