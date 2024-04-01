@@ -2,6 +2,10 @@
 
 ## sys-info-extended
 
+### 0.4.0
+
+- added `RamInfo` struct and `get_ram_infos()` function for only windows. It shows the megahertz infos of your individual rams that connected on motherboard and determines which ddr type it is. It has some drawbacks, it accepts 400-800 megahertz's as ddr2 and accept 801-1860 megahertz's as ddr3. Because there is no other way to determine which type if that ram has mhz between 800-1066 mhz, we cannot implemented it.
+
 ### 0.3.0
 
 - added `is_program_installed_search_hard()` function for only windows. Because windows has many api's for listing installed programs and some of them are extremely slow, i tried to made it as efficient as possible. Because of that, that function takes second argument is a struct that named `HardSearchOptions`. You can customize your searching via that struct. You have to select your searching is case sensitive or not and how hard it'll be. The 6 is hardest, more than 6 has the same effect. equal or less than 3 is same with easy search, if you're sure your program is reachable on terminal i strongly recommend to set hardness as 3 or use `is_program_installed()` function instead. If it doesn't, then i recommend that try lower to harder for the sake of performance.

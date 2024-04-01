@@ -1468,6 +1468,65 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
     return false
 }
 
+#[cfg(target_os = "windows")]
+#[derive(Debug)]
+pub struct RamInFo {
+    pub mhz: i32,
+    pub ddr_type: String
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_ram_infos() -> std::result::Result<Vec<RamInFo>, std::io::Error> {
+    let ram_info_command = std::process::Command::new("wmic").arg("memorychip").arg("get").arg("speed").output();
+
+    match ram_info_command {
+        Ok(answer) => {
+            let parse_the_answer = std::str::from_utf8(&answer.stdout).unwrap();
+            let mut rams = vec![];
+
+            for (index, line) in parse_the_answer.lines().into_iter().enumerate() {
+                let mut mhz: i32 = 0;
+                let mut ddr_type: String = "".to_string();
+
+                if index == 0 || line.trim() == "" {
+                    continue;
+                }
+
+                mhz = line.trim().parse::<i32>().unwrap();
+
+                if mhz >= 200 && mhz <= 400 {
+                    ddr_type = "ddr1".to_string();
+                }
+
+                if mhz >= 400 && mhz <= 800 {
+                    ddr_type = "ddr2".to_string();
+                }
+
+                if mhz > 800 && mhz <= 1860 {
+                    ddr_type = "ddr3".to_string();
+                }
+
+                if mhz >= 2133 && mhz <= 3200 {
+                    ddr_type = "ddr4".to_string();
+                }
+
+                if mhz > 3200 && mhz <= 8400 {
+                    ddr_type = "ddr5".to_string();
+                }
+
+                let ram_info = RamInFo {
+                    ddr_type, mhz
+                };
+
+                rams.push(ram_info);
+            }
+
+            return Ok(rams);
+        },
+        Err(error) => Err(std::io::Error::new(std::io::ErrorKind::InvalidData, error.to_string()))
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -1586,5 +1645,12 @@ mod test {
         };
 
         assert_eq!(true, is_program_installed_search_hard("Microsoft Edge", hard_search_options_2))
+    }
+
+    #[test]
+    pub fn test_get_ram_infos() {
+        let ram_infos = get_ram_infos().unwrap();
+        assert!(ram_infos.len() > 0);
+        println!("get_ram_infos(): {:#?}", ram_infos);
     }
 }
