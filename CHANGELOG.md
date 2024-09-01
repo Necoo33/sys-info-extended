@@ -2,6 +2,10 @@
 
 ## sys-info-extended
 
+### 0.5.0
+
+- added `get_system_env_var()` and `get_user_env_var()` functions. First works on both Windows and Linux, second works on only Windows. They took only one argument and that is the var name. They return to the environment variable's value. But they don't checks the whether characters are in utf8 format or not: because Windows api's won't return answers with Utf8 format, so if env variable's value includes non ascii characters and when you want to get them as Utf8 Rust String, that makes code panic. Because of that functions don't control whether they are utf8 or not and if that variable's value includes non ascii character that characters basically broke. Because of that, use that function with caution. 
+
 ### 0.4.0
 
 - added `RamInfo` struct and `get_ram_infos()` function for only windows. It shows the megahertz infos of your individual rams that connected on motherboard and determines which ddr type it is. It has some drawbacks, it accepts 400-800 megahertz's as ddr2 and accept 801-1860 megahertz's as ddr3. Because there is no other way to determine which type if that ram has mhz between 800-1066 mhz, we cannot implemented it.

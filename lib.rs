@@ -1527,6 +1527,55 @@ pub fn get_ram_infos() -> std::result::Result<Vec<RamInFo>, std::io::Error> {
     }
 }
 
+#[cfg(any(target_os = "windows", target_os = "linux"))]
+pub fn get_system_env_var(var_name: &str) -> std::result::Result<String, std::io::Error> {
+    #[cfg(target_os = "windows")]
+    {
+        let sanitize_var_name = var_name.to_ascii_uppercase();
+        let format_the_command = format!("[System.Environment]::GetEnvironmentVariable('{}', 'Machine')", sanitize_var_name);
+
+        let output = std::process::Command::new("powershell")
+                        .arg("-Command")
+                        .arg(format_the_command)
+                        .output();
+
+        return match output {
+            Ok(var_list) => Ok(String::from_utf8_lossy(&var_list.stdout).to_string()),
+            Err(error) => Err(std::io::Error::new(std::io::ErrorKind::Other, error.to_string()))
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let sanitize_var_name = var_name.to_ascii_uppercase();
+
+        let output = std::process::Command::new("printenv")
+                        .arg(sanitize_var_name)
+                        .output();
+
+        return match output {
+            Ok(var_list) => Ok(String::from_utf8_lossy(&var_list.stdout).to_string()),
+            Err(error) => Err(std::io::Error::new(std::io::ErrorKind::Other, error.to_string()))
+        }      
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_user_env_var(var_name: &str) -> std::result::Result<String, std::io::Error> {
+    let sanitize_var_name = var_name.to_ascii_uppercase();
+    let format_the_command = format!("[System.Environment]::GetEnvironmentVariable('{}', 'User')", sanitize_var_name);
+
+    let output = std::process::Command::new("powershell")
+                    .arg("-Command")
+                    .arg(format_the_command)
+                    .output();
+
+    return match output {
+        Ok(var_list) => Ok(String::from_utf8_lossy(&var_list.stdout).to_string()),
+        Err(error) => Err(std::io::Error::new(std::io::ErrorKind::Other, error.to_string()))
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -1647,10 +1696,27 @@ mod test {
         assert_eq!(true, is_program_installed_search_hard("Microsoft Edge", hard_search_options_2))
     }
 
+    #[cfg(target_os = "windows")]
     #[test]
     pub fn test_get_ram_infos() {
         let ram_infos = get_ram_infos().unwrap();
         assert!(ram_infos.len() > 0);
         println!("get_ram_infos(): {:#?}", ram_infos);
+    }
+
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
+    #[test]
+    pub fn test_get_system_env_var(){
+        let path_env_var = get_system_env_var("PATH");
+
+        assert_eq!(true, path_env_var.is_ok());
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    pub fn test_get_user_env_var(){
+        let path_env_var = get_user_env_var("PATH");
+
+        assert_eq!(true, path_env_var.is_ok());
     }
 }

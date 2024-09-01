@@ -24,7 +24,7 @@ and add this to crate root:
 
 ```rust
 
-use sys_info_extended::{os_type, os_release, get_graphics_info};
+use sys_info_extended::{os_type, os_release, get_graphics_info, get_system_env_var, get_public_ipv4_address};
 
 ```
 
@@ -35,6 +35,8 @@ use some functions:
 let our_os_type = os_type().unwrap();
 let os_release = os_release().unwrap();
 let graphics = get_graphics_info();
+let path_env = get_system_env_var("PATH").unwrap();
+let ip_address = get_public_ipv4_address();
 
 ```
 
