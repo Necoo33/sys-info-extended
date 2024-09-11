@@ -1272,6 +1272,13 @@ pub fn is_program_installed(program: &str) -> bool {
         Err(_) => ()
     }
 
+    let check4 = std::process::Command::new(program).arg("-version").output();
+
+    match check4 {
+        Ok(_) => return true,
+        Err(_) => ()
+    }
+
     return false
 }
 
