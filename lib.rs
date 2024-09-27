@@ -1583,6 +1583,140 @@ pub fn get_user_env_var(var_name: &str) -> std::result::Result<String, std::io::
     }
 }
 
+#[cfg(target_os = "windows")]
+#[derive(Debug)]
+pub struct LanguageOptions {
+   pub country: String,
+   pub name: String,
+   pub shortening: String,
+   pub lcid: String
+}
+
+#[cfg(target_os = "linux")]
+#[derive(Debug)]
+pub struct LanguageOptions {
+   pub shortening: String,
+   pub character_encoding: String,
+   pub country: String,
+}
+
+#[cfg(any(target_os = "windows", target_os = "linux"))]
+fn get_language_options() -> std::result::Result<LanguageOptions, std::io::Error> {
+   #[cfg(target_os = "windows")]
+   {
+       let get_lang_options_command = std::process::Command::new("powershell.exe").arg("Get-WinSystemLocale").output();
+
+       match get_lang_options_command {
+           Ok(output) => {
+               let parse_output = String::from_utf8_lossy(&output.stdout);
+               
+               for line in parse_output.lines() {
+                   if line.starts_with(" ") || line.starts_with("LCID") || line.starts_with("-") || line == "" {
+                       continue;
+                   }
+
+                   let split_the_line: Vec<&str> = line.split(" ").collect::<Vec<&str>>();
+
+                   let mut lcid = "".to_string();
+                   let mut shortening = "".to_string();
+                   let mut name = "".to_string();
+                   let mut country = "".to_string();
+
+                   let mut i: u8 = 0;
+                   for infos in split_the_line {
+                       if i == 0 {
+                           i = i + 1;
+
+                           lcid = infos.to_string()
+                       }
+
+                       if infos == "" {
+                           continue;
+                       }
+
+                       if infos.contains("-") {
+                           shortening = infos.split("-").collect::<Vec<&str>>()[0].to_string()
+                       } else {
+                           if infos != "" {
+                               if infos == "T�rk�e" {
+                                   country = "Türkiye".to_string();
+                                   name = "Türkçe".to_string();
+                               } else {
+                                   if infos.starts_with("(") {
+                                       country = infos.replace("(", "").replace("(", "")
+                                   } else {
+                                       name = infos.to_string()
+                                   }
+                               }
+                           }
+                       }
+
+                   }
+
+                   return Ok(LanguageOptions{
+                       lcid,
+                       country,
+                       name,
+                       shortening
+                   })
+               }
+
+               return Ok(LanguageOptions {
+                   lcid: "".to_string(),
+                   country: "".to_string(),
+                   name: "".to_string(),
+                   shortening: "".to_string()
+               })
+           },
+           Err(error) => {
+               Err(std::io::Error::new(std::io::ErrorKind::Other, error))
+           }
+       }
+   }
+
+   #[cfg(target_os = "linux")]
+   {
+       let get_lang_options_command = std::process::Command::new("locale").output();
+
+       match get_lang_options_command {
+           Ok(output) => {
+               let parse_answer = String::from_utf8_lossy(&output.stdout);
+
+               let mut shortening = "".to_string();
+               let mut character_encoding = "".to_string();
+               let mut country = "".to_string();
+           
+               for line in parse_answer.lines() {
+                   if line.starts_with("LANG") {
+                       let split_the_line = line.split("=").collect::<Vec<&str>>()[1];
+
+                       let split_the_line_second_time = split_the_line.split(".").collect::<Vec<&str>>();
+
+                       character_encoding = split_the_line_second_time[1].to_string();
+
+                       let stltt = split_the_line_second_time[0].split("_").collect::<Vec<&str>>();
+
+                       shortening = stltt[0].to_string();
+                       country = stltt[1].to_string();
+
+                       break;
+                   } else {
+                       continue;
+                   }
+               }
+
+               return Ok(LanguageOptions {
+                   shortening,
+                   country,
+                   character_encoding
+               })
+           },
+           Err(error) => Err(std::io::Error::new(std::io::ErrorKind::Other, error))
+       }
+
+   }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

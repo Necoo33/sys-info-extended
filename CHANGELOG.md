@@ -2,6 +2,10 @@
 
 ## sys-info-extended
 
+### 0.7.0
+
+- `get_language_options()` function and `LanguageOptions` struct added. It'll take also improvements on next releases.
+
 ### 0.6.0
 
 - `is_program_installed()` function updated, it's algorithm improved.
