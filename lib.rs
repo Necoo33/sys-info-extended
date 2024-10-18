@@ -10,6 +10,7 @@ extern crate palin;
 
 use std::ffi;
 use std::fmt;
+use std::fmt::Display;
 use std::io::{self, Read};
 use std::fs::File;
 #[cfg(any(target_os = "windows", target_vendor = "apple", target_os = "freebsd", target_os = "openbsd", target_os = "netbsd"))]
@@ -1601,7 +1602,7 @@ pub struct LanguageOptions {
 }
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
-fn get_language_options() -> std::result::Result<LanguageOptions, std::io::Error> {
+pub fn get_language_options() -> std::result::Result<LanguageOptions, std::io::Error> {
    #[cfg(target_os = "windows")]
    {
        let get_lang_options_command = std::process::Command::new("powershell.exe").arg("Get-WinSystemLocale").output();
@@ -1715,6 +1716,104 @@ fn get_language_options() -> std::result::Result<LanguageOptions, std::io::Error
        }
 
    }
+}
+
+#[cfg(target_os = "windows")]
+pub enum EnvLevel {
+    User, Machine
+}
+
+#[cfg(target_os = "windows")]
+impl Display for EnvLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            &EnvLevel::Machine => write!(f, "System"),
+            &EnvLevel::User => write!(f, "User"),
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub struct EnvOptions {
+    pub level: EnvLevel,
+    pub name: String,
+    pub value: String
+}
+
+#[cfg(target_os = "windows")]
+pub fn append_env(options: EnvOptions) -> std::result::Result<(), std::io::Error> {
+    let format_the_command: String;
+
+    match options.level {
+        EnvLevel::User => {
+            let variable = get_user_env_var(&options.name);
+
+            match variable {
+                Ok(value) => {
+                    let appended_var = format!("{};{}", value, options.value);
+
+                    format_the_command = format!("[System.Environment]::SetEnvironmentVariable('{}', '{}', 'User')", options.name, appended_var);
+        
+                },
+                Err(error) => {
+                    return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, format!("That error occured when we try to find {} variable in user's variable: {}", options.name, error)))
+                }
+            }
+        },
+        EnvLevel::Machine => {
+            let variable = get_system_env_var(&options.name);
+
+            match variable {
+                Ok(value) => {
+                    let appended_var = format!("{};{}", value, options.value);
+
+                    format_the_command = format!("[System.Environment]::SetEnvironmentVariable('{}', '{}', 'Machine')", options.name, appended_var)
+        
+                },
+                Err(error) => {
+                    return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, format!("That error occured when we try to find {} variable in system's variable: {}", options.name, error)))
+                }
+            }
+        }
+    }
+
+    let execute_appending = std::process::Command::new("powershell.exe")
+                                                                            .arg("-Command")
+                                                                            .arg(format_the_command)
+                                                                            .output();
+
+    match execute_appending {
+        Ok(_) => {
+            println!("{}'s {} env successfully updated.", options.level, options.name);
+            Ok(())
+        },
+        Err(error) => {
+            Err(std::io::Error::new(std::io::ErrorKind::Other, format!("That Error Occured When we updating the {}'s {} Env: {}", options.level, options.name, error)))
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn set_env(options: EnvOptions) -> std::result::Result<(), std::io::Error> {
+    let format_the_command: String;
+
+    match options.level {
+        EnvLevel::User => format_the_command = format!("[System.Environment]::SetEnvironmentVariable('{}', '{}', 'User')", options.name, options.value),
+        EnvLevel::Machine => format_the_command = format!("[System.Environment]::SetEnvironmentVariable('{}', '{}', 'Machine')", options.name, options.value),
+    }
+
+    let execute_appending = std::process::Command::new("powershell.exe")
+                                                                        .arg("-Command")
+                                                                        .arg(format_the_command)
+                                                                        .output();
+
+    match execute_appending {
+        Ok(_) => {
+            println!("{}'s {} env successfully updated.", options.level, options.name);
+            Ok(())
+        },
+        Err(error) => Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, format!("That Error Occured When we updating the {}'s {} Env: {}", options.level, options.name, error)))
+    }
 }
 
 #[cfg(test)]
