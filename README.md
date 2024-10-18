@@ -39,8 +39,8 @@ let path_env = get_system_env_var("PATH").unwrap();
 let ip_address = get_public_ipv4_address();
 
 let env_option = EnvOptions {
-    name: "A Env name that already exist",
-    value: "A Windows Path",
+    name: "A Env name that not exist",
+    value: "A value",
     level: EnvLevel::User
 }
 
