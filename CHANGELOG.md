@@ -2,6 +2,10 @@
 
 ## sys-info-extended
 
+### v0.8.1
+
+- Fixed a documentation typo that can mislead people.
+
 ### v0.8.0
 
 - Added `append_env()` and `set_env()` functions for windows. It needs an options argument which has type `EnvOptions` for defining env's name, value and which level of env it is. If you want to set or append an env to System, you have to run the application that your code included as administrator.
