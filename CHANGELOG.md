@@ -2,6 +2,11 @@
 
 ## sys-info-extended
 
+### v0.9.0
+
+- Added `UserConfigurations` struct, that includes home directory and shell preference of the user and `get_home_dir_and_shell()` function for getting that struct.
+- cc and libc versions upgraded.
+
 ### v0.8.1
 
 - Fixed a documentation typo that can mislead people.

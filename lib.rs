@@ -1816,6 +1816,90 @@ pub fn set_env(options: EnvOptions) -> std::result::Result<(), std::io::Error> {
     }
 }
 
+#[cfg(target_os = "linux")]
+#[derive(Debug, Clone)]
+pub struct UserConfigurations {
+    pub home_dir: String,
+    pub shell: String
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_home_dir_and_shell(username: &str) -> Result<UserConfigurations, std::io::Error> {
+    let path = std::path::Path::new("/etc/passwd");
+
+    let file = File::open(&path);
+
+    match file {
+        Ok(file) => {
+            use std::io::BufRead;
+
+            let mut i: usize = 0;
+
+            for line in std::io::BufReader::new(file).lines() {
+                if i == 0 {
+                    i = 1;
+                }
+
+                match line {
+                    Ok(line) => {
+                        match line.starts_with(username) {
+                            true => {
+                                let mut split_the_lines = line.split(":");
+
+                                match split_the_lines.nth(5) {
+                                    Some(home_dir) => {
+                                        match split_the_lines.nth(0) {
+                                            Some(shell) => {
+                                                return Ok(UserConfigurations {
+                                                    home_dir: home_dir.to_string(), 
+                                                    shell: shell.to_string()
+                                                })
+                                            },
+                                            None => return Err(std::io::Error::new(std::io::ErrorKind::Other, "Error: The /etc/passwd configurations for your user is configured unusually, we cannot find the seventh element on the row of given user."))
+                                        }
+                                    },
+                                    None => return Err(std::io::Error::new(std::io::ErrorKind::Other, "Error: The /etc/passwd configurations for your user is configured unusually, we cannot find the sixth element on the row of given user."))
+                                }
+                            }
+                            false => continue,
+                        }
+                    },
+                    Err(error) => {
+                        return match error.kind() {
+                            std::io::ErrorKind::AddrInUse => Err(std::io::Error::new(std::io::ErrorKind::AddrInUse, error)),
+                            std::io::ErrorKind::AddrNotAvailable => Err(std::io::Error::new(std::io::ErrorKind::AddrNotAvailable, error)),
+                            std::io::ErrorKind::AlreadyExists => Err(std::io::Error::new(std::io::ErrorKind::AlreadyExists, error)),
+                            std::io::ErrorKind::BrokenPipe => Err(std::io::Error::new(std::io::ErrorKind::BrokenPipe, error)),
+                            std::io::ErrorKind::ConnectionAborted => Err(std::io::Error::new(std::io::ErrorKind::ConnectionAborted, error)),
+                            std::io::ErrorKind::ConnectionRefused => Err(std::io::Error::new(std::io::ErrorKind::ConnectionRefused, error)),
+                            std::io::ErrorKind::ConnectionReset => Err(std::io::Error::new(std::io::ErrorKind::ConnectionReset, error)),
+                            std::io::ErrorKind::Interrupted => Err(std::io::Error::new(std::io::ErrorKind::Interrupted, error)),
+                            std::io::ErrorKind::InvalidData => Err(std::io::Error::new(std::io::ErrorKind::InvalidData, error)),
+                            std::io::ErrorKind::InvalidInput => Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, error)),
+                            std::io::ErrorKind::NotConnected => Err(std::io::Error::new(std::io::ErrorKind::NotConnected, error)),
+                            std::io::ErrorKind::NotFound => Err(std::io::Error::new(std::io::ErrorKind::NotFound, error)),
+                            std::io::ErrorKind::OutOfMemory => Err(std::io::Error::new(std::io::ErrorKind::OutOfMemory, error)),
+                            std::io::ErrorKind::PermissionDenied => Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, error)),
+                            std::io::ErrorKind::TimedOut => Err(std::io::Error::new(std::io::ErrorKind::TimedOut, error)),
+                            std::io::ErrorKind::UnexpectedEof => Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, error)),
+                            std::io::ErrorKind::Unsupported => Err(std::io::Error::new(std::io::ErrorKind::Unsupported, error)),
+                            std::io::ErrorKind::WouldBlock => Err(std::io::Error::new(std::io::ErrorKind::WouldBlock, error)),
+                            std::io::ErrorKind::WriteZero => Err(std::io::Error::new(std::io::ErrorKind::WriteZero, error)),
+                            _ => Err(std::io::Error::new(std::io::ErrorKind::Other, error)),
+                        }
+                    }
+                }
+            }
+
+            match i {
+                0 => return Err(std::io::Error::new(std::io::ErrorKind::Other, "An unexpected behavior occured: We could open Your /etc/passwd file but it is empty, which is almost impossible.")),
+                _ => return Err(std::io::Error::new(std::io::ErrorKind::Other, "It's here because of the rust synthax, impossible to came here."))
+            }
+        },
+        Err(error) => return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, error))
+    };
+}  
+
 #[cfg(test)]
 mod test {
     use super::*;
