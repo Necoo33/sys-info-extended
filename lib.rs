@@ -878,6 +878,8 @@ pub fn boottime() -> Result<timeval, Error> {
     Err(Error::UnsupportedSystem)
 }
 
+
+/// a type that includes all (probably) informations that windows provide about your graphics card.
 #[cfg(target_os = "windows")]
 #[derive(Debug)]
 pub struct WindowsGraphicsCard {
@@ -936,6 +938,8 @@ pub struct WindowsGraphicsCard {
     pub config_manager_user_config: Vec<String>,
     pub creation_classname: Vec<String>
 }
+
+/// get the graphic card infos, for windows.
 #[cfg(target_os = "windows")]
 pub fn get_graphics_info() -> WindowsGraphicsCard {
     use std::process::{Command, Output};
@@ -1072,6 +1076,7 @@ pub fn get_graphics_info() -> WindowsGraphicsCard {
     }
 }
 
+/// get the computer type. Only "Notebook" and "Desktop" allowed for linux, checks if a battery is exist that implemented on your computer and if it exists, return "Notebook" value, otherwise "Desktop" value. But the way it work on windows is different, it can return various values since windows has able to give more specific infos about computer types. 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 pub fn check_computer_type<'a>() -> &'a str {
     use std::process::{Command, Output};
@@ -1157,6 +1162,8 @@ pub fn check_computer_type<'a>() -> &'a str {
     return result;
 }
 
+
+/// get the current user as string. Both works on windows and linux.
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 pub fn get_current_user() -> String {
     use std::process::Command;
@@ -1187,6 +1194,7 @@ pub fn get_current_user() -> String {
     return result
 }
 
+/// Get the public ipv4 address as string.
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 pub fn get_public_ipv4_address() -> String {
     let mut ip_address = String::new();
@@ -1251,6 +1259,7 @@ pub fn get_public_ipv4_address() -> String {
     return ip_address
 }
 
+/// that function searchs a program on the terminal if it's exist and / or returns a positive answer to various version arguments. Works on both Windows And Linux.
 pub fn is_program_installed(program: &str) -> bool {
     let check1 = std::process::Command::new(program).output();
 
@@ -1280,9 +1289,18 @@ pub fn is_program_installed(program: &str) -> bool {
         Err(_) => ()
     }
 
+    let check5 = std::process::Command::new(program).arg("-v").output();
+
+    match check5 {
+        Ok(_) => return true,
+        Err(_) => ()
+    }
+
     return false
 }
 
+
+/// type that includes hard search options for `is_program_installed_search_hard()` function.
 #[cfg(target_os = "windows")]
 #[derive(Debug)]
 pub struct HardSearchOptions{
@@ -1290,6 +1308,7 @@ pub struct HardSearchOptions{
     pub search_hardness: u8
 }
 
+/// Since windows has a bunch of api's that enlists downloaded programs and not all of them reachable via a terminal, that function searchs a program with given name and options on both terminal and various program listing api's of windows. Warning: It runs too slow. Use it with caution.
 #[cfg(target_os = "windows")]
 pub fn is_program_installed_search_hard(program: &str, options: HardSearchOptions) -> bool {
     if options.search_hardness == 0 {
@@ -1476,6 +1495,7 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
     return false
 }
 
+/// type that includes mghz and ddr type values.
 #[cfg(target_os = "windows")]
 #[derive(Debug)]
 pub struct RamInFo {
@@ -1483,6 +1503,7 @@ pub struct RamInFo {
     pub ddr_type: String
 }
 
+/// returns the `RamInfo` struct per each ram that attached your computer, that includes the mhz value and ddr type, for only windows. 
 #[cfg(target_os = "windows")]
 pub fn get_ram_infos() -> std::result::Result<Vec<RamInFo>, std::io::Error> {
     let ram_info_command = std::process::Command::new("wmic").arg("memorychip").arg("get").arg("speed").output();
@@ -1535,6 +1556,7 @@ pub fn get_ram_infos() -> std::result::Result<Vec<RamInFo>, std::io::Error> {
     }
 }
 
+/// gets value of the env that has given name from the system. only for windows. 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 pub fn get_system_env_var(var_name: &str) -> std::result::Result<String, std::io::Error> {
     #[cfg(target_os = "windows")]
@@ -1568,6 +1590,7 @@ pub fn get_system_env_var(var_name: &str) -> std::result::Result<String, std::io
     }
 }
 
+/// gets value of the env that has given name from the user. only for windows.
 #[cfg(target_os = "windows")]
 pub fn get_user_env_var(var_name: &str) -> std::result::Result<String, std::io::Error> {
     let sanitize_var_name = var_name.to_ascii_uppercase();
@@ -1601,6 +1624,7 @@ pub struct LanguageOptions {
    pub country: String,
 }
 
+/// returns the language options for the computer, both works on windows and linux.
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 pub fn get_language_options() -> std::result::Result<LanguageOptions, std::io::Error> {
    #[cfg(target_os = "windows")]
@@ -1718,6 +1742,7 @@ pub fn get_language_options() -> std::result::Result<LanguageOptions, std::io::E
    }
 }
 
+/// Env level implementation for windows.
 #[cfg(target_os = "windows")]
 pub enum EnvLevel {
     User, Machine
@@ -1733,6 +1758,7 @@ impl Display for EnvLevel {
     }
 }
 
+/// configurations for working with env's on windows.
 #[cfg(target_os = "windows")]
 pub struct EnvOptions {
     pub level: EnvLevel,
@@ -1740,6 +1766,7 @@ pub struct EnvOptions {
     pub value: String
 }
 
+/// append a value currently existing env, only windows.
 #[cfg(target_os = "windows")]
 pub fn append_env(options: EnvOptions) -> std::result::Result<(), std::io::Error> {
     let format_the_command: String;
@@ -1793,6 +1820,8 @@ pub fn append_env(options: EnvOptions) -> std::result::Result<(), std::io::Error
     }
 }
 
+
+/// set an env variable if it's not exist before, only windows.
 #[cfg(target_os = "windows")]
 pub fn set_env(options: EnvOptions) -> std::result::Result<(), std::io::Error> {
     let format_the_command: String;
@@ -1816,14 +1845,14 @@ pub fn set_env(options: EnvOptions) -> std::result::Result<(), std::io::Error> {
     }
 }
 
-#[cfg(target_os = "linux")]
+/// Type that includes home directory and shell preference of user.
 #[derive(Debug, Clone)]
 pub struct UserConfigurations {
     pub home_dir: String,
     pub shell: String
 }
 
-#[cfg(target_os = "linux")]
+/// Returns The `UserConfigurations` struct that includes home dir and shell preference of the user. Only works on linux.
 pub fn get_home_dir_and_shell(username: &str) -> Result<UserConfigurations, std::io::Error> {
     let path = std::path::Path::new("/etc/passwd");
 

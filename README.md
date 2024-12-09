@@ -50,6 +50,7 @@ set_env(env_option);
 
 ### Already Planned Features For Next Releases
 
+* Optimizations and idiomaticizations on later implemented functions.
 * adding `get_download_speed()` function which measures your network's download speed.
 * Camera Infos
 * USB Infos
