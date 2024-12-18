@@ -2,9 +2,13 @@
 
 ## sys-info-extended
 
+### v0.9.2
+
+- Some target os configurations changed.
+
 ### v0.9.1
 
-- Added some documentation for the functions that implemented later than fork.
+- Added some documentation for the functions that implemented later than `sys-info` fork.
 - `is_program_installed()` functions algorithm improved.
 
 ### v0.9.0

@@ -1557,7 +1557,6 @@ pub fn get_ram_infos() -> std::result::Result<Vec<RamInFo>, std::io::Error> {
 }
 
 /// gets value of the env that has given name from the system. only for windows. 
-#[cfg(any(target_os = "windows", target_os = "linux"))]
 pub fn get_system_env_var(var_name: &str) -> std::result::Result<String, std::io::Error> {
     #[cfg(target_os = "windows")]
     {
@@ -1591,7 +1590,6 @@ pub fn get_system_env_var(var_name: &str) -> std::result::Result<String, std::io
 }
 
 /// gets value of the env that has given name from the user. only for windows.
-#[cfg(target_os = "windows")]
 pub fn get_user_env_var(var_name: &str) -> std::result::Result<String, std::io::Error> {
     let sanitize_var_name = var_name.to_ascii_uppercase();
     let format_the_command = format!("[System.Environment]::GetEnvironmentVariable('{}', 'User')", sanitize_var_name);
@@ -1625,7 +1623,6 @@ pub struct LanguageOptions {
 }
 
 /// returns the language options for the computer, both works on windows and linux.
-#[cfg(any(target_os = "windows", target_os = "linux"))]
 pub fn get_language_options() -> std::result::Result<LanguageOptions, std::io::Error> {
    #[cfg(target_os = "windows")]
    {
@@ -1743,12 +1740,10 @@ pub fn get_language_options() -> std::result::Result<LanguageOptions, std::io::E
 }
 
 /// Env level implementation for windows.
-#[cfg(target_os = "windows")]
 pub enum EnvLevel {
     User, Machine
 }
 
-#[cfg(target_os = "windows")]
 impl Display for EnvLevel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -1759,7 +1754,6 @@ impl Display for EnvLevel {
 }
 
 /// configurations for working with env's on windows.
-#[cfg(target_os = "windows")]
 pub struct EnvOptions {
     pub level: EnvLevel,
     pub name: String,
@@ -1767,7 +1761,6 @@ pub struct EnvOptions {
 }
 
 /// append a value currently existing env, only windows.
-#[cfg(target_os = "windows")]
 pub fn append_env(options: EnvOptions) -> std::result::Result<(), std::io::Error> {
     let format_the_command: String;
 
@@ -1822,7 +1815,6 @@ pub fn append_env(options: EnvOptions) -> std::result::Result<(), std::io::Error
 
 
 /// set an env variable if it's not exist before, only windows.
-#[cfg(target_os = "windows")]
 pub fn set_env(options: EnvOptions) -> std::result::Result<(), std::io::Error> {
     let format_the_command: String;
 
