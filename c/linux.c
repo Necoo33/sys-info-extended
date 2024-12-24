@@ -93,16 +93,16 @@ DiskInfo get_disk_info(void) {
 	}
 	while ( fgets(procline, sizeof(procline), mounts) ) {
 		device = procline;
-		mount = index(procline, ' ');
+		mount = strchr(procline, ' ');
 		if (mount == NULL) continue;
 		*mount++ = '\0';
-		type = index(mount, ' ');
+		type = strchr(mount, ' ');
 		if (type == NULL) continue;
 		*type++ = '\0';
-		mode = index(type, ' ');
+		mode = strchr(type, ' ');
 		if (mode == NULL) continue;
 		*mode++ = '\0';
-		other = index(mode, ' ');
+		other = strchr(mode, ' ');
 		if (other != NULL) *other = '\0';
 		if (!strncmp(mode, "ro", 2)) continue;
 		if (remote_mount(device, type)) continue;
