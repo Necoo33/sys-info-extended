@@ -291,6 +291,7 @@ pub enum Error {
     IO(io::Error),
     SystemTime(std::time::SystemTimeError),
     General(String),
+    Other(String),
     Unknown,
 }
 
@@ -304,6 +305,7 @@ impl fmt::Display for Error {
             SystemTime(ref e) => write!(fmt, "System time error: {}", e),
             General(ref e) => write!(fmt, "Error: {}", e),
             Unknown => write!(fmt, "An unknown error occurred"),
+            Other(ref e) => write!(fmt, "Error: {}", e)
         }
     }
 }
@@ -317,6 +319,7 @@ impl std::error::Error for Error {
             IO(_) => "io error",
             SystemTime(_) => "system time",
             General(_) => "general error",
+            Other(_) => "other error",
             Unknown => "unknown error",
         }
     }
@@ -328,6 +331,7 @@ impl std::error::Error for Error {
             ExecFailed(ref e) => Some(e),
             IO(ref e) => Some(e),
             SystemTime(ref e) => Some(e),
+            Other(_) => None,
             General(_) => None,
             Unknown => None,
         }
@@ -1079,7 +1083,7 @@ pub fn get_graphics_info() -> std::result::Result<WindowsGraphicsCard, std::io::
 
 /// get the computer type. Only "Notebook" and "Desktop" allowed for linux, checks if a battery is exist that implemented on your computer and if it exists, return "Notebook" value, otherwise "Desktop" value. But the way it work on windows is different, it can return various values since windows has able to give more specific infos about computer types. 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
-pub fn check_computer_type<'a>() -> &'a str {
+pub fn check_computer_type<'a>() -> std::result::Result<&'a str, Error> {
     use std::process::{Command, Output};
     use std::str;
     let mut result = "Unknown";
@@ -1111,9 +1115,7 @@ pub fn check_computer_type<'a>() -> &'a str {
     
         match chassis_type_number {
             Ok(chassis_num) => result = computer_type_cleanup_for_windows(chassis_num),
-            Err(err) => {
-                eprintln!("some error occured: {}", err);
-            }
+            Err(err) => return Err(Error::ExecFailed(err))
         };
 
         
@@ -1124,34 +1126,43 @@ pub fn check_computer_type<'a>() -> &'a str {
         let check_bat0 = Command::new("sh")
                             .arg("-c")
                             .arg("test -d /sys/class/power_supply/BAT0")
-                            .output()
-                            .expect("Couldn't run command")
-                            .status
-                            .success();
+                            .output();
+
+
+        let check_bat0 = match check_bat0 {
+            Ok(bat) => bat.status.success(),
+            Err(error) => return Err(Error::ExecFailed(error))
+        };
 
         let check_bat1 = Command::new("sh")
                             .arg("-c")
                             .arg("test -d /sys/class/power_supply/BAT1")
-                            .output()
-                            .expect("Couldn't run command")
-                            .status
-                            .success();
+                            .output();
+
+        let check_bat1 = match check_bat1 {
+            Ok(bat) => bat.status.success(),
+            Err(error) => return Err(Error::ExecFailed(error))
+        };
 
         let check_bat2 = Command::new("sh")
                             .arg("-c")
                             .arg("test -d /sys/class/power_supply/BAT2")
-                            .output()
-                            .expect("Couldn't run command")
-                            .status
-                            .success();
+                            .output();
+
+        let check_bat2 = match check_bat2 {
+            Ok(bat) => bat.status.success(),
+            Err(error) => return Err(Error::ExecFailed(error))
+        };
 
         let check_bat3 = Command::new("sh")
                             .arg("-c")
                             .arg("test -d /sys/class/power_supply/BAT3")
-                            .output()
-                            .expect("Couldn't run command")
-                            .status
-                            .success();
+                            .output();
+
+        let check_bat3 = match check_bat3 {
+            Ok(bat) => bat.status.success(),
+            Err(error) => return Err(Error::ExecFailed(error))
+        };
 
         if check_bat0 || check_bat1 || check_bat2 || check_bat3 {
             result = "Notebook";
@@ -1160,7 +1171,7 @@ pub fn check_computer_type<'a>() -> &'a str {
         }
     }
 
-    return result;
+    return Ok(result);
 }
 
 
@@ -1197,7 +1208,7 @@ pub fn get_current_user() -> String {
 
 /// Get the public ipv4 address as string.
 #[cfg(any(target_os = "windows", target_os = "linux"))]
-pub fn get_public_ipv4_address() -> String {
+pub fn get_public_ipv4_address() -> std::result::Result<String, Error> {
     let mut ip_address = String::new();
 
     #[cfg(target_os = "linux")]
@@ -1214,7 +1225,7 @@ pub fn get_public_ipv4_address() -> String {
 
                     ip_address = parse_answer.trim().to_string();
                 },
-                Err(_) => ()
+                Err(error) => return Err(Error::Other(error.to_string()))
             }
         } else if check_if_wget_exist() {
             let wget_command = std::process::Command::new("wget").arg("-qO-").arg("ifconfig.me/ip").output();
@@ -1225,7 +1236,7 @@ pub fn get_public_ipv4_address() -> String {
 
                     ip_address = parse_answer.trim().to_string();
                 },
-                Err(_) => ()
+                Err(error) => return Err(Error::Other(error.to_string()))
             }
         } else if check_if_curl_exist() {
             let curl_command = std::process::Command::new("curl").arg("ifconfig.me/ip").output();
@@ -1236,7 +1247,7 @@ pub fn get_public_ipv4_address() -> String {
 
                     ip_address = parse_answer.trim().to_string();
                 },
-                Err(_) => ()
+                Err(error) => return Err(Error::Other(error.to_string()))
             }
         }
     }
@@ -1251,13 +1262,11 @@ pub fn get_public_ipv4_address() -> String {
 
                 ip_address = parse_answer.trim().to_string()
             },
-            Err(error) => {
-                eprintln!("this error occrued on get_public_ipv4_address function: {}", error)
-            } 
+            Err(error) => return Err(Error::Other(error.to_string()))
         }
     }
 
-    return ip_address
+    return Ok(ip_address)
 }
 
 /// that function searchs a program on the terminal if it's exist and / or returns a positive answer to various version arguments. Works on both Windows And Linux.
@@ -2020,7 +2029,7 @@ mod test {
     #[test]
     pub fn test_check_computer_type() {
         let pc_type = check_computer_type();
-        println!("computer type: {}", pc_type);
+        println!("computer type: {}", pc_type.unwrap());
     }
 
     #[test]
@@ -2041,7 +2050,7 @@ mod test {
     #[cfg(any(target_os = "windows", target_os = "linux"))]
     #[test]
     pub fn test_get_public_ipv4_address(){
-        assert_ne!(String::new(), get_public_ipv4_address())
+        assert_ne!(String::new(), get_public_ipv4_address().unwrap())
     }
 
     #[cfg(target_os = "windows")]
