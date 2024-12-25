@@ -1,7 +1,7 @@
 
-extern crate sys_info;
+extern crate sys_info_extended;
 
-use sys_info::*;
+use sys_info_extended::*;
 
 fn main() {
 

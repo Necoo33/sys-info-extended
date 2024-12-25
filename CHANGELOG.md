@@ -2,6 +2,10 @@
 
 ## sys-info-extended
 
+### v1.0.2
+
+- Some other modifications made and some tests for c functions made.
+
 ### v1.0.1
 
 - README.md file modified.

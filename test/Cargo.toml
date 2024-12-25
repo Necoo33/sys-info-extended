@@ -4,7 +4,7 @@ name = "test"
 version = "0.0.1"
 authors = ["FillZpp <FillZpp.pub@gmail.com>"]
 
-[dependencies.sys-info]
+[dependencies.sys-info-extended]
 path = ".."
 version = "*"
 

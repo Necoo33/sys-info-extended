@@ -1,13 +1,14 @@
 # sys-info-extended
 
-This crate is a fork of [sys-info](https://crates.io/crates/sys-info) crate, and i'll continue to develop. Contributions are welcome especially for mac os.
-
 Get system information in Rust.
 
+This crate is a fork of [sys-info](https://crates.io/crates/sys-info) crate, and i'll continue to develop. Contributions are welcome especially for mac os. And c api's.
+
 For now it supports Linux, Mac OS X, illumos, Solaris, FreeBSD, OpenBSD, NetBSD and Windows.
-And now it can get information of kernel/cpu/memory/disk/load/hostname/graphics and so on.
 
 I especially focused on very practical informations about system(computer type, user name, public ipv4 address etc.) and especially Windows api's. Because of that, in my opinion it's the best crate for getting system info especially for windows. I aim the include outputs of all windows classes in future releases. So if you're a game developer or windows programmer, this will be one of the go-to crates for you.
+
+And that crate also includes some system info's for linux, for example home directory of user and shell path.
 
 If you like this liblary, give a star on it's [github repo](https://github.com/Necoo33/sys-info-extended)
 
