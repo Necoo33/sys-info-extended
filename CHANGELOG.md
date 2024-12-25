@@ -2,6 +2,11 @@
 
 ## sys-info-extended
 
+### v1.0.0
+
+- `index()` functions in `get_disk_info()` function are changed with `strchr()` function.
+- liblary's way of handling operating system configurations of functions changed. All functions which implemented later than fork now returns a result type, and we check if they are used on correct operating system in the functions itself and basically throw an Err variant with explaining that.
+
 ### v0.9.2
 
 - Some target os configurations changed.

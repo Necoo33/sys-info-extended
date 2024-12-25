@@ -880,7 +880,6 @@ pub fn boottime() -> Result<timeval, Error> {
 
 
 /// a type that includes all (probably) informations that windows provide about your graphics card.
-#[cfg(target_os = "windows")]
 #[derive(Debug)]
 pub struct WindowsGraphicsCard {
     pub name: Vec<String>,
@@ -940,8 +939,10 @@ pub struct WindowsGraphicsCard {
 }
 
 /// get the graphic card infos, for windows.
-#[cfg(target_os = "windows")]
-pub fn get_graphics_info() -> WindowsGraphicsCard {
+pub fn get_graphics_info() -> std::result::Result<WindowsGraphicsCard, std::io::Error> {
+    if !cfg!(target_os = "windows") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "The 'get_graphics_info()' function is only available on windows."));
+    }
     use std::process::{Command, Output};
     use std::str;
 
@@ -1018,7 +1019,7 @@ pub fn get_graphics_info() -> WindowsGraphicsCard {
         return new_string_array;
     }
 
-    WindowsGraphicsCard {
+    Ok(WindowsGraphicsCard {
         accelerator_capabilities: windows_outputs_cleanup(accelerator_capabilities),
         name: windows_outputs_cleanup(name), 
         description: windows_outputs_cleanup(description),
@@ -1073,7 +1074,7 @@ pub fn get_graphics_info() -> WindowsGraphicsCard {
         config_manager_error_code: windows_outputs_cleanup(config_manager_error_code),
         config_manager_user_config: windows_outputs_cleanup(config_manager_user_config),
         creation_classname: windows_outputs_cleanup(creation_classname)
-    }
+    })
 }
 
 /// get the computer type. Only "Notebook" and "Desktop" allowed for linux, checks if a battery is exist that implemented on your computer and if it exists, return "Notebook" value, otherwise "Desktop" value. But the way it work on windows is different, it can return various values since windows has able to give more specific infos about computer types. 
@@ -1301,7 +1302,6 @@ pub fn is_program_installed(program: &str) -> bool {
 
 
 /// type that includes hard search options for `is_program_installed_search_hard()` function.
-#[cfg(target_os = "windows")]
 #[derive(Debug)]
 pub struct HardSearchOptions{
     pub case_sensitive: bool,
@@ -1309,43 +1309,46 @@ pub struct HardSearchOptions{
 }
 
 /// Since windows has a bunch of api's that enlists downloaded programs and not all of them reachable via a terminal, that function searchs a program with given name and options on both terminal and various program listing api's of windows. Warning: It runs too slow. Use it with caution.
-#[cfg(target_os = "windows")]
-pub fn is_program_installed_search_hard(program: &str, options: HardSearchOptions) -> bool {
+pub fn is_program_installed_search_hard(program: &str, options: HardSearchOptions) -> std::result::Result<bool, std::io::Error> {
+    if !cfg!(target_os = "windows") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "The 'is_program_installed_search_hard()' function is only available on windows."));
+    }
+
     if options.search_hardness == 0 {
-        return false;
+        return Ok(false);
     }
 
     let check1 = std::process::Command::new(program).output();
 
     match check1 {
-        Ok(_) => return true,
+        Ok(_) => return Ok(true),
         Err(_) => ()
     };
 
     if options.search_hardness == 1 {
-        return false;
+        return Ok(false);
     }
 
     let check2 = std::process::Command::new(program).arg("version").output();
 
     match check2 {
-        Ok(_) => return true,
+        Ok(_) => return Ok(true),
         Err(_) => ()
     };
 
     if options.search_hardness == 2 {
-        return false;
+        return Ok(false);
     }
 
     let check3 = std::process::Command::new(program).arg("--version").output();
 
     match check3 {
-        Ok(_) => return true,
+        Ok(_) => return Ok(true),
         Err(_) => ()
     }
 
     if options.search_hardness == 3 {
-        return false;
+        return Ok(false);
     }
 
     let check4 = std::process::Command::new("powershell").arg("Get-Package").output();
@@ -1357,7 +1360,7 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
             for line in parse_answer.lines() {
                 if options.case_sensitive {
                     if line.trim().starts_with(program) {
-                        return true;
+                        return Ok(true);
                     } 
                 } else {
                     let left_side = line.trim().to_lowercase();
@@ -1368,7 +1371,7 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
                     let right_side = right_side.as_ref();
                     
                     if left_side.contains(right_side) {
-                        return true
+                        return Ok(true)
                     }
                 }
             }
@@ -1377,7 +1380,7 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
     }
 
     if options.search_hardness == 4 {
-        return false;
+        return Ok(false);
     }
 
     let check5 = std::process::Command::new("powershell").arg("Get-AppxPackage").output();
@@ -1393,7 +1396,7 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
                             let split_the_line: &str = line.split(":").collect::<Vec<&str>>()[1].trim();
 
                             if program == split_the_line {
-                                return true;
+                                return Ok(true);
                             }
                         }
 
@@ -1401,7 +1404,7 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
                             let split_the_line: &str = line.split(":").collect::<Vec<&str>>()[1].trim();
 
                             if program == split_the_line {
-                                return true;
+                                return Ok(true);
                             }
                         }
 
@@ -1409,7 +1412,7 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
                             let split_the_line: &str = line.split(":").collect::<Vec<&str>>()[1].trim();
 
                             if program == split_the_line {
-                                return true;
+                                return Ok(true);
                             }
                         }
                     },
@@ -1425,7 +1428,7 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
                             let right_side = right_side.as_ref();
                             
                             if left_side == right_side {
-                                return true
+                                return Ok(true)
                             }
                         }
 
@@ -1440,7 +1443,7 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
                             let right_side = right_side.as_ref();
                             
                             if left_side == right_side {
-                                return true
+                                return Ok(true)
                             }
                         }
 
@@ -1455,7 +1458,7 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
                             let right_side = right_side.as_ref();
                             
                             if left_side == right_side {
-                                return true
+                                return Ok(true)
                             }
                         }
                     }
@@ -1466,7 +1469,7 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
     }
 
     if options.search_hardness == 5 {
-        return false;
+        return Ok(false);
     }
 
     let check6 = std::process::Command::new("powershell").arg("wmic").arg("product").arg("get").arg("name").output();
@@ -1478,11 +1481,11 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
             for line in parse_answer.lines() {
                 if options.case_sensitive {
                     if line.trim() == program {
-                        return true;
+                        return Ok(true);
                     } 
                 } else {
                     if line.trim().to_lowercase().as_bytes() == program.to_lowercase().as_bytes() {
-                        return true
+                        return Ok(true)
                     }
                 }
             }
@@ -1492,11 +1495,10 @@ pub fn is_program_installed_search_hard(program: &str, options: HardSearchOption
         }
     }
 
-    return false
+    return Ok(false)
 }
 
 /// type that includes mghz and ddr type values.
-#[cfg(target_os = "windows")]
 #[derive(Debug)]
 pub struct RamInFo {
     pub mhz: i32,
@@ -1504,8 +1506,11 @@ pub struct RamInFo {
 }
 
 /// returns the `RamInfo` struct per each ram that attached your computer, that includes the mhz value and ddr type, for only windows. 
-#[cfg(target_os = "windows")]
 pub fn get_ram_infos() -> std::result::Result<Vec<RamInFo>, std::io::Error> {
+    if !cfg!(target_os = "windows") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "The 'get_ram_infos()' function is only available on windows."));
+    }
+
     let ram_info_command = std::process::Command::new("wmic").arg("memorychip").arg("get").arg("speed").output();
 
     match ram_info_command {
@@ -1591,6 +1596,10 @@ pub fn get_system_env_var(var_name: &str) -> std::result::Result<String, std::io
 
 /// gets value of the env that has given name from the user. only for windows.
 pub fn get_user_env_var(var_name: &str) -> std::result::Result<String, std::io::Error> {
+    if !cfg!(target_os = "windows") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "The 'get_user_env_var()' function is only available on windows."));
+    }
+
     let sanitize_var_name = var_name.to_ascii_uppercase();
     let format_the_command = format!("[System.Environment]::GetEnvironmentVariable('{}', 'User')", sanitize_var_name);
 
@@ -1762,6 +1771,10 @@ pub struct EnvOptions {
 
 /// append a value currently existing env, only windows.
 pub fn append_env(options: EnvOptions) -> std::result::Result<(), std::io::Error> {
+    if !cfg!(target_os = "windows") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "The 'append_env()' function is only available on windows."));
+    }
+
     let format_the_command: String;
 
     match options.level {
@@ -1816,6 +1829,10 @@ pub fn append_env(options: EnvOptions) -> std::result::Result<(), std::io::Error
 
 /// set an env variable if it's not exist before, only windows.
 pub fn set_env(options: EnvOptions) -> std::result::Result<(), std::io::Error> {
+    if !cfg!(target_os = "windows") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "The 'set_env()' function is only available on windows."));
+    }
+
     let format_the_command: String;
 
     match options.level {
@@ -1846,6 +1863,10 @@ pub struct UserConfigurations {
 
 /// Returns The `UserConfigurations` struct that includes home dir and shell preference of the user. Only works on linux.
 pub fn get_home_dir_and_shell(username: &str) -> Result<UserConfigurations, std::io::Error> {
+    if !cfg!(target_os = "linux") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "'get_home_dir_and_shell()' function is only available on linux."));
+    }
+
     let path = std::path::Path::new("/etc/passwd");
 
     let file = File::open(&path);
@@ -2031,14 +2052,14 @@ mod test {
             search_hardness: 5 // the biggest level is 6, and it's it's slowest level. If your program is available on terminal, choose 3 instead.
         };
 
-        assert_eq!(true, is_program_installed_search_hard("miCroSoft eDgE", hard_search_options));
+        assert_eq!(true, is_program_installed_search_hard("miCroSoft eDgE", hard_search_options).unwrap());
 
         let hard_search_options_2 = HardSearchOptions {
             case_sensitive: true,
             search_hardness: 5
         };
 
-        assert_eq!(true, is_program_installed_search_hard("Microsoft Edge", hard_search_options_2))
+        assert_eq!(true, is_program_installed_search_hard("Microsoft Edge", hard_search_options_2).unwrap())
     }
 
     #[cfg(target_os = "windows")]
