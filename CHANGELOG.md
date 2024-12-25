@@ -2,6 +2,11 @@
 
 ## sys-info-extended
 
+### v1.1.0
+
+- Bug in imports in test case fixed.
+- cc, libc and palin versions upgraded the latest ones.
+
 ### v1.0.2
 
 - Some other modifications made and some tests for c functions made.
