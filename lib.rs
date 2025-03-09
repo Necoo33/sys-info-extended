@@ -1953,7 +1953,7 @@ pub fn get_home_dir_and_shell(username: &str) -> Result<UserConfigurations, std:
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 pub fn get_timezone() -> Result<String, std::io::Error> {
-    if !cfg!(target_os = "linux") && !cfg!(target_os = "linux") {
+    if !cfg!(target_os = "windows") && !cfg!(target_os = "linux") {
         return Err(std::io::Error::new(std::io::ErrorKind::Other, "'get_timezone()' function is only available on linux and windows."));
     }
 
@@ -1964,12 +1964,12 @@ pub fn get_timezone() -> Result<String, std::io::Error> {
     let get_timezone = std::process::Command::new("powershell.exe").arg("Get-TimeZone").output();
 
     match get_timezone {
-        Ok(timezone) => {
-            let output = String::from_utf8_lossy(&timezone.stdout);
+        Ok(tz) => {
+            let output = String::from_utf8_lossy(&tz.stdout);
 
             for line in output.lines() {
                 if line.starts_with("Id") {
-                    timezone = line.split(" : ").nth(1).unwrap();
+                    timezone = line.split(" : ").nth(1).unwrap().to_string();
                 }
             }
         },
