@@ -1952,15 +1952,13 @@ pub fn get_home_dir_and_shell(username: &str) -> Result<UserConfigurations, std:
 }  
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
-#[derive(Debug, Clone)]
-pub struct Time {
-    pub timezone: String,
-    pub time: String,
-    pub date: String
-}
+pub fn get_timezone() -> Result<String, std::io::Error> {
+    if !cfg!(target_os = "linux") && !cfg!(target_os = "linux") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "'get_timezone()' function is only available on linux and windows."));
+    }
 
-#[cfg(any(target_os = "windows", target_os = "linux"))]
-fn get_time() -> Result<Time, std::io::Error> {
+    let mut timezone = String::new();
+
     #[cfg(target_os = "windows")]
     {
     let get_timezone = std::process::Command::new("powershell.exe").arg("Get-TimeZone").output();
@@ -1969,53 +1967,11 @@ fn get_time() -> Result<Time, std::io::Error> {
         Ok(timezone) => {
             let output = String::from_utf8_lossy(&timezone.stdout);
 
-            let mut timezone = String::new();
-
             for line in output.lines() {
                 if line.starts_with("Id") {
-                    timezone = line.split(" : ").nth(1).unwrap().to_string();
+                    timezone = line.split(" : ").nth(1).unwrap();
                 }
             }
-
-            let get_time = std::process::Command::new("powershell.exe").arg("Get-Date").arg("-Format").arg("HH:mm:ss").output();
-
-            let time = match get_time {
-                Ok(time) => {
-                    let mut current_time = String::new();
-
-                    for line in String::from_utf8_lossy(&time.stdout).to_string().lines() {
-                        if !line.starts_with(" ") {
-                            current_time = line.to_string()
-                        }
-                    }
-
-                    current_time
-                },
-                Err(error) => return Err(error) 
-            };
-
-            let get_date = std::process::Command::new("powershell.exe").arg("Get-Date").arg("-Format").arg("yyyy-MM-dd").output();
-
-            let date = match get_date {
-                Ok(time) => {
-                    let mut current_time = String::new();
-
-                    for line in String::from_utf8_lossy(&time.stdout).to_string().lines() {
-                        if !line.starts_with(" ") {
-                            current_time = line.to_string()
-                        }
-                    }
-
-                    current_time
-                },
-                Err(error) => return Err(error) 
-            };
-
-            return Ok(Time {
-                timezone,
-                time,
-                date
-            })
         },
         Err(error) => return Err(error)
     }
@@ -2023,8 +1979,54 @@ fn get_time() -> Result<Time, std::io::Error> {
 
     #[cfg(target_os = "linux")]
     {
+        let path = std::path::Path::new("/etc/timezone");
 
+        let file = File::open(&path);
+
+        match file {
+            Ok(file) => {
+                use std::io::BufRead;
+
+                for line in std::io::BufReader::new(file).lines() {
+                    match line {
+                        Ok(l) => {
+                            if !l.starts_with(" ") {
+                                timezone = l
+                            }
+                        },
+                        Err(error) => {
+                            return match error.kind() {
+                                std::io::ErrorKind::AddrInUse => Err(std::io::Error::new(std::io::ErrorKind::AddrInUse, error)),
+                                std::io::ErrorKind::AddrNotAvailable => Err(std::io::Error::new(std::io::ErrorKind::AddrNotAvailable, error)),
+                                std::io::ErrorKind::AlreadyExists => Err(std::io::Error::new(std::io::ErrorKind::AlreadyExists, error)),
+                                std::io::ErrorKind::BrokenPipe => Err(std::io::Error::new(std::io::ErrorKind::BrokenPipe, error)),
+                                std::io::ErrorKind::ConnectionAborted => Err(std::io::Error::new(std::io::ErrorKind::ConnectionAborted, error)),
+                                std::io::ErrorKind::ConnectionRefused => Err(std::io::Error::new(std::io::ErrorKind::ConnectionRefused, error)),
+                                std::io::ErrorKind::ConnectionReset => Err(std::io::Error::new(std::io::ErrorKind::ConnectionReset, error)),
+                                std::io::ErrorKind::Interrupted => Err(std::io::Error::new(std::io::ErrorKind::Interrupted, error)),
+                                std::io::ErrorKind::InvalidData => Err(std::io::Error::new(std::io::ErrorKind::InvalidData, error)),
+                                std::io::ErrorKind::InvalidInput => Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, error)),
+                                std::io::ErrorKind::NotConnected => Err(std::io::Error::new(std::io::ErrorKind::NotConnected, error)),
+                                std::io::ErrorKind::NotFound => Err(std::io::Error::new(std::io::ErrorKind::NotFound, error)),
+                                std::io::ErrorKind::OutOfMemory => Err(std::io::Error::new(std::io::ErrorKind::OutOfMemory, error)),
+                                std::io::ErrorKind::PermissionDenied => Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, error)),
+                                std::io::ErrorKind::TimedOut => Err(std::io::Error::new(std::io::ErrorKind::TimedOut, error)),
+                                std::io::ErrorKind::UnexpectedEof => Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, error)),
+                                std::io::ErrorKind::Unsupported => Err(std::io::Error::new(std::io::ErrorKind::Unsupported, error)),
+                                std::io::ErrorKind::WouldBlock => Err(std::io::Error::new(std::io::ErrorKind::WouldBlock, error)),
+                                std::io::ErrorKind::WriteZero => Err(std::io::Error::new(std::io::ErrorKind::WriteZero, error)),
+                                _ => Err(std::io::Error::new(std::io::ErrorKind::Other, error)),
+                            }
+                        }
+                    }
+                }
+
+            },
+            Err(error) => return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, error))
+        }
     }
+
+    Ok(timezone)
 }
 
 #[cfg(test)]
@@ -2169,5 +2171,13 @@ mod test {
         let path_env_var = get_user_env_var("PATH");
 
         assert_eq!(true, path_env_var.is_ok());
+    }
+
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
+    #[test]
+    pub fn test_get_timezone(){
+        let timezone = get_timezone();
+
+        assert_eq!(true, timezone.is_ok())
     }
 }
