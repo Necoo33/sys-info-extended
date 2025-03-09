@@ -1951,6 +1951,82 @@ pub fn get_home_dir_and_shell(username: &str) -> Result<UserConfigurations, std:
     };
 }  
 
+#[cfg(any(target_os = "windows", target_os = "linux"))]
+#[derive(Debug, Clone)]
+pub struct Time {
+    pub timezone: String,
+    pub time: String,
+    pub date: String
+}
+
+#[cfg(any(target_os = "windows", target_os = "linux"))]
+fn get_time() -> Result<Time, std::io::Error> {
+    #[cfg(target_os = "windows")]
+    {
+    let get_timezone = std::process::Command::new("powershell.exe").arg("Get-TimeZone").output();
+
+    match get_timezone {
+        Ok(timezone) => {
+            let output = String::from_utf8_lossy(&timezone.stdout);
+
+            let mut timezone = String::new();
+
+            for line in output.lines() {
+                if line.starts_with("Id") {
+                    timezone = line.split(" : ").nth(1).unwrap().to_string();
+                }
+            }
+
+            let get_time = std::process::Command::new("powershell.exe").arg("Get-Date").arg("-Format").arg("HH:mm:ss").output();
+
+            let time = match get_time {
+                Ok(time) => {
+                    let mut current_time = String::new();
+
+                    for line in String::from_utf8_lossy(&time.stdout).to_string().lines() {
+                        if !line.starts_with(" ") {
+                            current_time = line.to_string()
+                        }
+                    }
+
+                    current_time
+                },
+                Err(error) => return Err(error) 
+            };
+
+            let get_date = std::process::Command::new("powershell.exe").arg("Get-Date").arg("-Format").arg("yyyy-MM-dd").output();
+
+            let date = match get_date {
+                Ok(time) => {
+                    let mut current_time = String::new();
+
+                    for line in String::from_utf8_lossy(&time.stdout).to_string().lines() {
+                        if !line.starts_with(" ") {
+                            current_time = line.to_string()
+                        }
+                    }
+
+                    current_time
+                },
+                Err(error) => return Err(error) 
+            };
+
+            return Ok(Time {
+                timezone,
+                time,
+                date
+            })
+        },
+        Err(error) => return Err(error)
+    }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
