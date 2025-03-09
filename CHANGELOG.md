@@ -2,6 +2,11 @@
 
 ## sys-info-extended
 
+### v1.2.0
+
+- `get_timezone()` function added, it returns the timezone of the system. In windows, returning values are not compatible with tz database timezones.
+- cc and libc versions upgraded the latest ones.
+
 ### v1.1.0
 
 - Bug in imports in test case fixed.

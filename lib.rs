@@ -1951,6 +1951,7 @@ pub fn get_home_dir_and_shell(username: &str) -> Result<UserConfigurations, std:
     };
 }  
 
+/// it returns the system's timezone info. In windows, It returning values are incompatible with tz database timezones such as "Turkey Standard Time" instead of "Europe/Istanbul". 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 pub fn get_timezone() -> Result<String, std::io::Error> {
     if !cfg!(target_os = "windows") && !cfg!(target_os = "linux") {
